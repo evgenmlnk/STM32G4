@@ -71,8 +71,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
-#define DATA_VALIDATION
-//#define PERFORMANCE_MEASUREMENT
+//#define DATA_VALIDATION
+#define PERFORMANCE_MEASUREMENT
 
 #define BLOCK_SIZE 256
 

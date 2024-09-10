@@ -77,7 +77,7 @@ void Error_Handler(void);
 #define BLOCK_SIZE 256
 
 /* FMAC Parameters */
-#define NO_OF_TAPS 64
+#define NO_OF_TAPS 127
 
 #if NO_OF_TAPS == 32
     #define X1_BUFF_SIZE  112

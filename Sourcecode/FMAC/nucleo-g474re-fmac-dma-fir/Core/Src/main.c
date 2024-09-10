@@ -116,7 +116,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
 #ifdef PERFORMANCE_MEASUREMENT
     // Enable the DWT unit
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
@@ -246,9 +245,10 @@ int main(void)
 
    currentBlock++;
 
-
 	  /* Repeat until required number of frames have been processed */
 	  do {
+
+
 
 		    /* While processing is going on, fill next frame with input signal from Flash */
 		   while(HalfGetDataCallbackCount == OldValue);
@@ -277,6 +277,9 @@ int main(void)
 					 aCalculatedFilteredData_Validation_q15[i+BLOCK_SIZE*(currentBlock-1)] = aCalculatedFilteredData_q15[i];
 					#endif
 				  }
+					#ifdef PERFORMANCE_MEASUREMENT
+								printf("%lu\r\n", dwtCycleCount);
+					#endif
 
 				 OldValue = OutputDataReadyCallbackCount;
 				 currentBlock++;
@@ -320,20 +323,6 @@ int main(void)
 	  HAL_Delay(1);
 	}
 #endif
-
-#ifdef PERFORMANCE_MEASUREMENT
-
-		  for(i = 0; i < NO_OF_BLOCKS; i++)
-		  {
-			 dwtCycleCount = aDWTCycleCount[i];
-			 printf("%lu\r\n", dwtCycleCount);
-			 HAL_Delay(1);
-
-		  }
-
-#endif
-
-
 
 
 
@@ -576,7 +565,7 @@ void HAL_FMAC_OutputDataReadyCallback(FMAC_HandleTypeDef *hfmac)
 
 	dwtCycleCountStop = DWT->CYCCNT;
 
-	  aDWTCycleCount[currentBlock-1]  = dwtCycleCountStop - dwtCycleCountStart;
+	  dwtCycleCount  = dwtCycleCountStop - dwtCycleCountStart;
 	  dwtCycleCountStart = dwtCycleCountStop;
 #endif
 
