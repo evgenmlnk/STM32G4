@@ -54,6 +54,11 @@ static int16_t aInputValues_q15[BLOCK_SIZE];
 
 static int16_t aCalculatedFilteredData_q15[BLOCK_SIZE];
 
+#ifdef DATA_VALIDATION
+	static int16_t aCalculatedFilteredData_Validation_q15[INPUT_SIGNAL_SIZE];
+	volatile int16_t output;
+#endif
+
 static int16_t aFilterPreloadValues_q15[PRELOAD_SIZE] = {0};
 static int16_t  firStateQ15[BLOCK_SIZE + PRELOAD_SIZE];
 volatile uint32_t dwtCycleCountStart;
@@ -62,9 +67,9 @@ volatile uint32_t dwtCycleCount;
 uint32_t frameCout;
 volatile uint32_t aDWTCycleCount[NO_OF_BLOCKS];
 
-uint8_t currentBlock;
-uint16_t i;
-uint16_t j;
+ uint8_t currentBlock;
+ uint16_t i;
+ uint16_t j;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -90,6 +95,7 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
+#ifdef PERFORMANCE_MEASUREMENT
     // Enable the DWT unit
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 
@@ -98,6 +104,8 @@ int main(void)
 
     // Reset the cycle counter
     DWT->CYCCNT = 0;
+
+#endif
 
   /* USER CODE END 1 */
 
@@ -150,58 +158,62 @@ int main(void)
       firStateQ15[i] = aFilterPreloadValues_q15[i];
   }
 
-//  // Preload the state buffer with these initial conditions
-//  for (i = NO_OF_TAPS - 1; i < BLOCK_SIZE + NO_OF_TAPS - 1; i++) {
-//      firStateQ15[NO_OF_TAPS - 2 + i] = aInputValues_q15[i];
-//  }
-
-
  if (arm_fir_init_q15(&S, NO_OF_TAPS,  (int16_t *)&aFirCoeff_q15[0], &firStateQ15[0], BLOCK_SIZE) != ARM_MATH_SUCCESS)
 	 {
-
 	 //error handler
 	 };
 
 
- for(i = 0; i < NO_OF_BLOCKS; i++)
+ for(currentBlock = 0; currentBlock < NO_OF_BLOCKS; currentBlock++)
  {
+#ifdef PERFORMANCE_MEASUREMENT
 	dwtCycleCountStart  = DWT->CYCCNT;
+#endif
 
 	arm_fir_fast_q15(&S, aInputValues_q15, aCalculatedFilteredData_q15, BLOCK_SIZE);
 
+#ifdef PERFORMANCE_MEASUREMENT
+		// Read the current cycle count
+	   dwtCycleCountStop = DWT->CYCCNT;
 
-	// Read the current cycle count
-   dwtCycleCountStop = DWT->CYCCNT;
-
-//   aDWTCycleCount[i] = dwtCycleCountStop - dwtCycleCountStart;
-   dwtCycleCount = dwtCycleCountStop - dwtCycleCountStart;
-
+	//   aDWTCycleCount[i] = dwtCycleCountStop - dwtCycleCountStart;
+	   dwtCycleCount = dwtCycleCountStop - dwtCycleCountStart;
+#endif
 
    for (j = 0; j<BLOCK_SIZE; j++)
    {
- 	  aInputValues_q15[j] = aInputSignal_q15[j + BLOCK_SIZE*i];
+ 	  aInputValues_q15[j] = aInputSignal_q15[j + BLOCK_SIZE*(currentBlock+1)];
 
    }
-   printf("%lu\r\n", dwtCycleCount);
-   // Reset the cycle counter
-    DWT->CYCCNT = 0;
+
+#ifdef DATA_VALIDATION
+			for (i = 0; i<BLOCK_SIZE; i++)
+			{
+
+				  /*store data for validation*/
+				  aCalculatedFilteredData_Validation_q15[i+BLOCK_SIZE*(currentBlock)] = aCalculatedFilteredData_q15[i];
+
+			}
+#endif
+#ifdef PERFORMANCE_MEASUREMENT
+			printf("%lu\r\n", dwtCycleCount);
+#endif
+
  }
 
-
-
-
-// for(int i = 0; i < NO_OF_BLOCKS; i++)
-// {
-//
-//	 dwtCycleCount = aDWTCycleCount[i];
-//	 printf("%lu\r\n", dwtCycleCount);
-//	 HAL_Delay(1);
-//
-// }
-
-
-
  dwtCycleCount = 0;
+
+#ifdef DATA_VALIDATION
+/*print filter output */
+	for(i = 0; i < INPUT_SIGNAL_SIZE; i++)
+	{
+		// assign to global var to print in STM32CubeMonitor
+	  output = aCalculatedFilteredData_Validation_q15[i];
+	  // print via UART
+	  printf("%d\r\n", output);
+	  HAL_Delay(1);
+	}
+#endif
 
   /* USER CODE END 2 */
 

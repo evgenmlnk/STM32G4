@@ -74,27 +74,39 @@ void Error_Handler(void);
 //#define DATA_VALIDATION
 #define PERFORMANCE_MEASUREMENT
 
+#define BLOCK_SIZE 2048
+
 /* FIR Parameters */
-#define NO_OF_TAPS 127
+
+#define NO_OF_TAPS 32
+
+// Define the preload size
 #define PRELOAD_SIZE (NO_OF_TAPS - 1)
 
-/* Size of the data arrays */
-/* Size of the data arrays */
-#define BLOCK_SIZE              256
-// Use block size settings based on BLOCK_SIZE value
-#if BLOCK_SIZE == 256
-    #define HALF_BLOCK_SIZE        (BLOCK_SIZE / 2)
-    #define NO_OF_BLOCKS           800
-#elif BLOCK_SIZE == 2048
-
-    #define NO_OF_BLOCKS           100
-#elif BLOCK_SIZE == 8192
-
-    #define NO_OF_BLOCKS           25
+// Conditional block size and number of blocks
+#ifdef DATA_VALIDATION
+    // Override settings for data validation
+    #undef BLOCK_SIZE
+    #define BLOCK_SIZE 256
+    #define NO_OF_BLOCKS 4
 #else
-    #error "Unsupported BLOCK_SIZE"
+    // Use block size settings based on BLOCK_SIZE value
+    #if BLOCK_SIZE == 256
+        #define HALF_BLOCK_SIZE        (BLOCK_SIZE / 2)
+        #define NO_OF_BLOCKS           800
+    #elif BLOCK_SIZE == 2048
+        #define HALF_BLOCK_SIZE        (BLOCK_SIZE / 2)
+        #define NO_OF_BLOCKS           100
+    #elif BLOCK_SIZE == 8192
+        #define HALF_BLOCK_SIZE        (BLOCK_SIZE / 2)
+        #define NO_OF_BLOCKS           25
+    #else
+        #error "Unsupported BLOCK_SIZE"
+    #endif
 #endif
-#define INPUT_SIGNAL_SIZE		BLOCK_SIZE*NO_OF_BLOCKS
+
+// Define the input signal size
+#define INPUT_SIGNAL_SIZE        (BLOCK_SIZE * NO_OF_BLOCKS)
 
 /* USER CODE END Private defines */
 
