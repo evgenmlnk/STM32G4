@@ -71,13 +71,13 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
-//#define DATA_VALIDATION
-#define PERFORMANCE_MEASUREMENT
+#define DATA_VALIDATION
+//#define PERFORMANCE_MEASUREMENT
 
 #define BLOCK_SIZE 2048
 
 /* FMAC Parameters */
-#define NO_OF_TAPS 64
+#define NO_OF_TAPS 32
 
 #if NO_OF_TAPS == 32
     #define X1_BUFF_SIZE  112

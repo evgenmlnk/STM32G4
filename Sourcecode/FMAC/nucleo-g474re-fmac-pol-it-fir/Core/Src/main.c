@@ -187,7 +187,7 @@ int main(void)
   /* Enable DMA output transfer */
   sFmacConfig.OutputAccess = FMAC_BUFFER_ACCESS_IT;
   /* Enable clipping of the output at 0x7FFF and 0x8000 */
-  sFmacConfig.Clip = FMAC_CLIP_DISABLED;
+  sFmacConfig.Clip = FMAC_CLIP_ENABLED;
   /* P parameter contains number of coefficients */
   sFmacConfig.P = NO_OF_TAPS;
   /* Q parameter is not used */
