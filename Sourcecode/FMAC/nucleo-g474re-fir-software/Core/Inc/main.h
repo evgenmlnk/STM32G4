@@ -74,11 +74,13 @@ void Error_Handler(void);
 //#define DATA_VALIDATION
 #define PERFORMANCE_MEASUREMENT
 
-#define BLOCK_SIZE 8192
+#define BLOCK_SIZE 256
 
 /* FMAC Parameters */
-#define NO_OF_TAPS 127
+#define NO_OF_TAPS 32
 
+// Increase overlap size to 2 * (NO_OF_TAPS - 1)
+#define OVERLAP_SIZE (2 * (NO_OF_TAPS - 1))
 
 // Define the preload size
 #define PRELOAD_SIZE (NO_OF_TAPS - 1)

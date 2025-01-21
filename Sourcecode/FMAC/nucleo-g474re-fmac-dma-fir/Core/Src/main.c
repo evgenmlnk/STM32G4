@@ -247,9 +247,6 @@ int main(void)
 
 	  /* Repeat until required number of frames have been processed */
 	  do {
-
-
-
 		    /* While processing is going on, fill next frame with input signal from Flash */
 		   while(HalfGetDataCallbackCount == OldValue);
 		   while(GetDataCallbackCount == OldValue){
@@ -257,33 +254,30 @@ int main(void)
 			  {
 				  /*write new data */
 				  aInputValues_q15[i] = aInputSignal_q15[i+BLOCK_SIZE*currentBlock];
-				#ifdef DATA_VALIDATION
+					#ifdef DATA_VALIDATION
 				  /*store data for validation*/
-				  aCalculatedFilteredData_Validation_q15[i+BLOCK_SIZE*(currentBlock-1)] = aCalculatedFilteredData_q15[i];
-				#endif
+				  	aCalculatedFilteredData_Validation_q15[i+BLOCK_SIZE*(currentBlock-1)]
+														   = aCalculatedFilteredData_q15[i];
+					#endif
 			  }
-
 		   }
-
 			   /* Wait for FMAC to finish processing frame */
 			   while (OutputDataReadyCallbackCount == OldValue);
 				  for (i = HALF_BLOCK_SIZE; i<BLOCK_SIZE; i++)
 				  {
 					  /*write new data */
-					  aInputValues_q15[i] = aInputSignal_q15[i+BLOCK_SIZE*currentBlock];
-
-					 #ifdef DATA_VALIDATION
+					aInputValues_q15[i] = aInputSignal_q15[i+BLOCK_SIZE*currentBlock];
+					#ifdef DATA_VALIDATION
 					  /*store data for validation*/
-					 aCalculatedFilteredData_Validation_q15[i+BLOCK_SIZE*(currentBlock-1)] = aCalculatedFilteredData_q15[i];
+					 aCalculatedFilteredData_Validation_q15[i+BLOCK_SIZE*(currentBlock-1)]
+															= aCalculatedFilteredData_q15[i];
 					#endif
 				  }
 					#ifdef PERFORMANCE_MEASUREMENT
 								printf("%lu\r\n", dwtCycleCount);
 					#endif
-
 				 OldValue = OutputDataReadyCallbackCount;
 				 currentBlock++;
-
 				  /* end of loop */
 		  } while(OutputDataReadyCallbackCount < NO_OF_BLOCKS);
 		  {
@@ -293,7 +287,6 @@ int main(void)
 		      Error_Handler();
 		    }
 		  }
-
 
 		   /* Stop the calculation of FIR filter in polling/DMA mode */
 			if (HAL_FMAC_FilterStop(&hfmac) != HAL_OK)

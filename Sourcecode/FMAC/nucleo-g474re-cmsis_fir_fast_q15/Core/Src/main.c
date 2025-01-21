@@ -166,39 +166,35 @@ int main(void)
 
  for(currentBlock = 0; currentBlock < NO_OF_BLOCKS; currentBlock++)
  {
-#ifdef PERFORMANCE_MEASUREMENT
-	dwtCycleCountStart  = DWT->CYCCNT;
-#endif
+	#ifdef PERFORMANCE_MEASUREMENT
+		dwtCycleCountStart  = DWT->CYCCNT;
+	#endif
 
 	arm_fir_fast_q15(&S, aInputValues_q15, aCalculatedFilteredData_q15, BLOCK_SIZE);
 
-#ifdef PERFORMANCE_MEASUREMENT
-		// Read the current cycle count
-	   dwtCycleCountStop = DWT->CYCCNT;
-
-	//   aDWTCycleCount[i] = dwtCycleCountStop - dwtCycleCountStart;
-	   dwtCycleCount = dwtCycleCountStop - dwtCycleCountStart;
-#endif
+	#ifdef PERFORMANCE_MEASUREMENT
+			// Read the current cycle count
+		   dwtCycleCountStop = DWT->CYCCNT;
+		   dwtCycleCount = dwtCycleCountStop - dwtCycleCountStart;
+	#endif
 
    for (j = 0; j<BLOCK_SIZE; j++)
    {
  	  aInputValues_q15[j] = aInputSignal_q15[j + BLOCK_SIZE*(currentBlock+1)];
 
    }
+	#ifdef DATA_VALIDATION
+		for (i = 0; i<BLOCK_SIZE; i++)
+		{
+			  /*store data for validation*/
+			  aCalculatedFilteredData_Validation_q15[i+BLOCK_SIZE*(currentBlock)]
+													 = aCalculatedFilteredData_q15[i];
 
-#ifdef DATA_VALIDATION
-			for (i = 0; i<BLOCK_SIZE; i++)
-			{
-
-				  /*store data for validation*/
-				  aCalculatedFilteredData_Validation_q15[i+BLOCK_SIZE*(currentBlock)] = aCalculatedFilteredData_q15[i];
-
-			}
-#endif
-#ifdef PERFORMANCE_MEASUREMENT
-			printf("%lu\r\n", dwtCycleCount);
-#endif
-
+		}
+	#endif
+	#ifdef PERFORMANCE_MEASUREMENT
+				printf("%lu\r\n", dwtCycleCount);
+	#endif
  }
 
  dwtCycleCount = 0;

@@ -50,11 +50,13 @@ UART_HandleTypeDef huart2;
 
 
 
-static int16_t aInputValues_q15[BLOCK_SIZE];
+// Extend the input buffer to include history
+static int16_t aInputValues_q15[BLOCK_SIZE + OVERLAP_SIZE] = {0};
 
 static int16_t aCalculatedFilteredData_q15[BLOCK_SIZE];
 #ifdef DATA_VALIDATION
 	static int16_t aCalculatedFilteredData_Validation_q15[INPUT_SIGNAL_SIZE];
+	volatile int16_t input;
 	volatile int16_t output;
 #endif
 
@@ -72,6 +74,7 @@ uint8_t currentBlock;
 uint16_t i;
 uint16_t j;
 uint16_t k;
+uint16_t n;
 int32_t acc; // Accumulator
 int32_t temp; // Temporary variable for multiplication
 int16_t *coeffp;
@@ -144,46 +147,47 @@ int main(void)
   /* Fill the input values buffer with the initial data */
 
 
-  for (i = 0; i <= PRELOAD_SIZE; i++) {
-      aInputValues_q15[i] = aFilterPreloadValues_q15[i];
-  }
+  // Fill the input buffer with preload values at the start of the operation
+    for (i = 0; i < PRELOAD_SIZE; i++) {
+        aInputValues_q15[i] = aFilterPreloadValues_q15[i];
+    }
 
-  for (i = PRELOAD_SIZE+1; i < BLOCK_SIZE; i++) {
-      aInputValues_q15[i] = aInputSignal_q15[i- PRELOAD_SIZE+1];
-  }
+    // Gradually fill input values for the first block processing
+    for (i = OVERLAP_SIZE; i < BLOCK_SIZE + OVERLAP_SIZE; i++) {
+        // Apply a ramp-up for the first block to avoid abrupt changes
+        aInputValues_q15[i] = (int16_t)((i - OVERLAP_SIZE) * aInputSignal_q15[i - OVERLAP_SIZE] / BLOCK_SIZE);
+    }
 
   /* Process each block */
   for (i = 0; i < NO_OF_BLOCKS; i++) {
-  #ifdef PERFORMANCE_MEASUREMENT
+      #ifdef PERFORMANCE_MEASUREMENT
       dwtCycleCountStart = DWT->CYCCNT;
-  #endif
+      #endif
+      // Copy new input data into the buffer, starting after the overlapping data
+      for (j = 0; j < BLOCK_SIZE; j++) {
+          aInputValues_q15[OVERLAP_SIZE + j] = aInputSignal_q15[j + BLOCK_SIZE * i];
+      }
+      // Perform FIR filtering on the extended buffer
+         for (k = 0; k < BLOCK_SIZE; k++) {
+             acc = 0;
+             coeffp = aFirCoeff_q15;
+             inputp = &aInputValues_q15[OVERLAP_SIZE + k];
 
-      /* FIR Filter computation for the block */
-      for (k = 0; k < BLOCK_SIZE; k++) {
-          acc = 0;
-          coeffp = aFirCoeff_q15;
-          inputp = &aInputValues_q15[NO_OF_TAPS -1 + k];
+             for (j = 0; j < NO_OF_TAPS; j++) {
+                 acc += (*coeffp++) * (*inputp--);
+             }
 
-          for (j = 0; j < NO_OF_TAPS; j++) {
-              acc += (*coeffp++) * (*inputp--);
-          }
-          if(k>220){
-        	  k=k;
-          }
           aCalculatedFilteredData_q15[k] = (int16_t)(acc >> 15); // Adjust for fixed-point representation
       }
-
-  #ifdef PERFORMANCE_MEASUREMENT
-      dwtCycleCountStop = DWT->CYCCNT;
-      dwtCycleCount = dwtCycleCountStop - dwtCycleCountStart;
-      printf("%lu\r\n", dwtCycleCount);
-  #endif
-
-      /* Update input buffer for the next block */
-      for (j = 0; j < BLOCK_SIZE; j++) {
-          aInputValues_q15[j] = aInputSignal_q15[j + BLOCK_SIZE * (i + 1) - PRELOAD_SIZE+1];
+	  #ifdef PERFORMANCE_MEASUREMENT
+		  dwtCycleCountStop = DWT->CYCCNT;
+		  dwtCycleCount = dwtCycleCountStop - dwtCycleCountStart;
+		  printf("%lu\r\n", dwtCycleCount);
+	  #endif
+      // Copy the last OVERLAP_SIZE samples to the start of aInputValues_q15 for the next block
+      for (j = 0; j < OVERLAP_SIZE; j++) {
+          aInputValues_q15[j] = aInputValues_q15[BLOCK_SIZE + j];
       }
-
   #ifdef DATA_VALIDATION
       /* Store filtered data for validation */
       for (j = 0; j < BLOCK_SIZE; j++) {
@@ -191,15 +195,14 @@ int main(void)
       }
   #endif
   }
-
-  #ifdef DATA_VALIDATION
+#ifdef DATA_VALIDATION
   /* Print filter output for validation */
   for (i = 0; i < INPUT_SIGNAL_SIZE; i++) {
       output = aCalculatedFilteredData_Validation_q15[i];
       printf("%d\r\n", output);
       HAL_Delay(1);
   }
-  #endif
+ #endif
 
   /* USER CODE END 2 */
 
